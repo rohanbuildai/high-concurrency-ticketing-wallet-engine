@@ -19,7 +19,7 @@ const registerUser = async ( { name , email , password } ) => {
 
     INSERT INTO users(name , email , password_hash)
     VALUES($1 , $2 , $3)
-    RETURNING *;
+    RETURNING id, name, email, created_at;
     ` ;
 
     const values = [ name , email , password ] ;
