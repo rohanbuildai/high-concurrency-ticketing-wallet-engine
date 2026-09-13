@@ -42,10 +42,10 @@ CREATE TABLE refresh_tokens (
     CONSTRAINT fk_refresh_tokens_replaced_by
         FOREIGN KEY (replaced_by_token_id)
         REFERENCES refresh_tokens(id)
+);
 
     CREATE INDEX idx_refresh_tokens_user_id
     ON refresh_tokens(user_id);
 
     CREATE INDEX idx_refresh_tokens_expires_at
     ON refresh_tokens(expires_at);
-);
