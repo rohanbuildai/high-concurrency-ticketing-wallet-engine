@@ -109,9 +109,37 @@ const refreshAccessToken = async ( req , res ) => {
    }catch(error) {
 
     console.error(error) ;
-    console.log(error)
 
     return res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+    
+
+   }
+}
+
+const getCurrentUser = async ( req , res ) => {
+
+  try {
+
+    const { id } = req.user ;
+
+    const user = await authService.getCurrentUser({
+      userId : id
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: "User Exists",
+      data: user,
+    });
+
+  }catch(error) {
+
+    console.error(error) ;
+
+    return res.status(404).json({
       success: false,
       message: error.message,
     });
@@ -124,5 +152,6 @@ const refreshAccessToken = async ( req , res ) => {
 module.exports = {
     registerUser ,
     loginUser ,
-    refreshAccessToken
+    refreshAccessToken ,
+    getCurrentUser
 }

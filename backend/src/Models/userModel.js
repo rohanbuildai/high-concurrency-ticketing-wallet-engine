@@ -29,7 +29,23 @@ const registerUser = async ( { name , email , password } ) => {
     return result.rows[0] ;
 }
 
+const getUserById = async ( { userId } ) => {
+
+    const query = `
+    SELECT id, name, email, status, created_at, updated_at
+    FROM users
+    WHERE id = $1;` ;
+
+    const value = [ userId ] ;
+
+    const result = await pool.query( query , value ) ;
+
+    return result.rows[0] ;
+}
+
+
 module.exports = {
     getUserByEmail ,
-    registerUser
+    registerUser ,
+    getUserById
 }

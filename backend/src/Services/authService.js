@@ -237,8 +237,29 @@ const refreshAccessToken = async( { refreshToken } ) => {
     }
 }
 
+const getCurrentUser = async ( { userId } ) => {
+
+    try {
+
+        const user = await userModel.getUserById({
+            userId
+        })
+
+        if ( !user ) {
+            throw new Error("User not found") ;
+        }
+
+        return user ;
+    }catch(error) {
+        console.error(error) ;
+
+        throw error ;
+}
+}
+
 module.exports = {
     registerUser ,
     loginUser ,
-    refreshAccessToken
+    refreshAccessToken ,
+    getCurrentUser
 }
