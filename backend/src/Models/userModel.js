@@ -32,9 +32,22 @@ const registerUser = async ( { name , email , password } ) => {
 const getUserById = async ( { userId } ) => {
 
     const query = `
-    SELECT id, name, email, status, created_at, updated_at
+    SELECT id, name, email, status, created_at, updated_at, role
     FROM users
     WHERE id = $1;` ;
+
+    const value = [ userId ] ;
+
+    const result = await pool.query( query , value ) ;
+
+    return result.rows[0] ;
+}
+
+const getUserRole = async ( { userId } ) => {
+
+    const query = `
+    SELECT role FROM
+    users WHERE id = $1;` ;
 
     const value = [ userId ] ;
 
@@ -47,5 +60,6 @@ const getUserById = async ( { userId } ) => {
 module.exports = {
     getUserByEmail ,
     registerUser ,
-    getUserById
+    getUserById ,
+    getUserRole
 }

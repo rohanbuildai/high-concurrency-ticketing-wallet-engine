@@ -257,9 +257,27 @@ const getCurrentUser = async ( { userId } ) => {
 }
 }
 
+const getUserRole = async ( { userId } ) => {
+
+    try {
+
+        const userRole = await userModel.getUserRole({
+            userId
+        })
+
+        return userRole ;
+
+    }catch(error) {
+        console.error(error) ;
+
+        throw error ;
+}
+}
+
 module.exports = {
     registerUser ,
     loginUser ,
     refreshAccessToken ,
-    getCurrentUser
+    getCurrentUser ,
+    getUserRole
 }
