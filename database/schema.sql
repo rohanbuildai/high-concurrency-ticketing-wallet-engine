@@ -43,12 +43,10 @@ CREATE TABLE refresh_tokens (
         FOREIGN KEY (replaced_by_token_id)
         REFERENCES refresh_tokens(id)
 );
-
-    CREATE INDEX idx_refresh_tokens_user_id
-    ON refresh_tokens(user_id);
-
-    CREATE INDEX idx_refresh_tokens_expires_at
-    ON refresh_tokens(expires_at);
+CREATE INDEX idx_refresh_tokens_user_id
+ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_expires_at
+ON refresh_tokens(expires_at);
 
 
 ALTER TABLE users
@@ -57,3 +55,36 @@ ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'USER';
 ALTER TABLE users
 ADD CONSTRAINT users_role_check
 CHECK (role IN ('USER', 'ADMIN'));
+
+
+CREATE TABLE events (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    name VARCHAR(200) NOT NULL,
+
+    description TEXT,
+
+    venue VARCHAR(255) NOT NULL,
+
+    event_date TIMESTAMPTZ NOT NULL,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+
+    created_by BIGINT NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT events_status_check
+        CHECK (status IN ('DRAFT', 'PUBLISHED', 'CANCELLED')),
+
+    CONSTRAINT fk_events_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+        ON DELETE RESTRICT
+);
+CREATE INDEX idx_events_created_by
+ON events(created_by);
+CREATE INDEX idx_events_status_event_date
+ON events(status, event_date);
