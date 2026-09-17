@@ -127,10 +127,56 @@ const deleteEvent = async ({ eventId }) => {
     return deletedEvent;
 };
 
+const updateEventStatus = async ({ eventId, status }) => {
+    if (!eventId) {
+        throw new Error("Event ID is required");
+    }
+
+    const allowedStatuses = [
+        "DRAFT",
+        "PUBLISHED",
+        "CANCELLED"
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error("Invalid event status");
+    }
+
+    const existingEvent = await eventModel.getEventById({
+        eventId
+    });
+
+    if (!existingEvent) {
+        throw new Error("Event not found");
+    }
+
+    const currentStatus = existingEvent.status;
+
+    const validTransitions = {
+        DRAFT: ["PUBLISHED", "CANCELLED"],
+        PUBLISHED: ["CANCELLED"],
+        CANCELLED: []
+    };
+
+    if (!validTransitions[currentStatus].includes(status)) {
+        throw new Error(
+            `Invalid status transition from ${currentStatus} to ${status}`
+        );
+    }
+
+    const updatedEventStatus = await eventModel.updateEventStatus({
+        eventId,
+        status
+    });
+
+    return updatedEventStatus;
+};
+
 module.exports = {
     createEvent,
     getEventById ,
     getEvents ,
     updateEvent ,
-    deleteEvent
+    deleteEvent ,
+    updateEventStatus
 };

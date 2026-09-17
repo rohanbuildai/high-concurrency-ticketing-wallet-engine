@@ -132,10 +132,36 @@ const deleteEvent = async (req, res) => {
     }
 };
 
+const updateEventStatus = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { status } = req.body;
+
+        const updatedEventStatus = await eventService.updateEventStatus({
+            eventId,
+            status
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Event status updated successfully",
+            data: updatedEventStatus
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createEvent,
     getEventById ,
     getEvents ,
     updateEvent ,
-    deleteEvent
+    deleteEvent ,
+    updateEventStatus
 };

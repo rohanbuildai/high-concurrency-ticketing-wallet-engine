@@ -101,10 +101,37 @@ const deleteEvent = async ( { eventId } ) => {
     return result.rows[0] ;
 };
 
+const updateEventStatus = async ({ eventId, status }) => {
+    const query = `
+        UPDATE events
+        SET
+            status = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING
+            id,
+            name,
+            description,
+            venue,
+            event_date,
+            status,
+            created_by,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [status, eventId];
+
+    const result = await pool.query(query, values);
+
+    return result.rows[0];
+};
+
 module.exports = {
     createEvent ,
     getEventById ,
     getEvents ,
     updateEvent ,
-    deleteEvent
+    deleteEvent ,
+    updateEventStatus
 }
