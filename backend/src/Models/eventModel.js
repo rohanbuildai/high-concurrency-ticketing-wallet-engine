@@ -44,8 +44,43 @@ const getEvents = async ( { limit , offset } ) => {
     return result.rows ;
 }
 
+const updateEvent = async ( { eventId , name , description , venue , eventDate } ) => {
+
+    const query = `
+    UPDATE events
+    SET name = $1,
+        description = $2,
+        venue = $3,
+        event_date = $4,
+        updated_at = NOW()
+    WHERE id = $5
+    RETURNING
+        id,
+        name,
+        description,
+        venue,
+        event_date,
+        status,
+        created_by,
+        created_at,
+        updated_at;` ;
+
+    const values = [
+        name,
+        description,
+        venue,
+        eventDate,
+        eventId
+    ];
+
+    const result = await pool.query(query, values);
+
+    return result.rows[0];
+}
+
 module.exports = {
     createEvent ,
     getEventById ,
-    getEvents
+    getEvents ,
+    updateEvent
 }

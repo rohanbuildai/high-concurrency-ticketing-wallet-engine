@@ -76,8 +76,42 @@ const getEvents = async ( req , res ) => {
     }
 };
 
+const updateEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const {
+            name,
+            description,
+            venue,
+            eventDate
+        } = req.body;
+
+        const updatedEvent = await eventService.updateEvent({
+            eventId,
+            name,
+            description,
+            venue,
+            eventDate
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Event updated successfully",
+            data: updatedEvent
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createEvent,
     getEventById ,
-    getEvents
+    getEvents ,
+    updateEvent
 };

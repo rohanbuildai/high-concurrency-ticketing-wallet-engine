@@ -61,8 +61,47 @@ const getEvents = async ( { page = 1 , limit = 20 } ) => {
     return events ;
 }
 
+const updateEvent = async ({
+    eventId,
+    name,
+    description,
+    venue,
+    eventDate
+}) => {
+    if (!eventId) {
+        throw new Error("Event ID is required");
+    }
+
+    if (!name || !venue || !eventDate) {
+        throw new Error("Name, venue and event date are required");
+    }
+
+    const existingEvent = await eventModel.getEventById({
+        eventId
+    });
+
+    if (!existingEvent) {
+        throw new Error("Event not found");
+    }
+
+    if (existingEvent.status === "CANCELLED") {
+        throw new Error("Cancelled events cannot be updated");
+    }
+
+    const updatedEvent = await eventModel.updateEvent({
+        eventId,
+        name,
+        description,
+        venue,
+        eventDate
+    });
+
+    return updatedEvent;
+};
+
 module.exports = {
     createEvent,
     getEventById ,
-    getEvents
+    getEvents ,
+    updateEvent
 };
