@@ -73,14 +73,38 @@ const updateEvent = async ( { eventId , name , description , venue , eventDate }
         eventId
     ];
 
-    const result = await pool.query(query, values);
+    const result = await pool.query( query , values) ;
 
-    return result.rows[0];
+    return result.rows[0] ;
 }
+
+const deleteEvent = async ( { eventId } ) => {
+    const query = `
+        DELETE FROM events
+        WHERE id = $1
+        RETURNING
+            id,
+            name,
+            description,
+            venue,
+            event_date,
+            status,
+            created_by,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [ eventId ] ;
+
+    const result = await pool.query( query , values ) ;
+
+    return result.rows[0] ;
+};
 
 module.exports = {
     createEvent ,
     getEventById ,
     getEvents ,
-    updateEvent
+    updateEvent ,
+    deleteEvent
 }

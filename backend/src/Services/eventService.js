@@ -99,9 +99,38 @@ const updateEvent = async ({
     return updatedEvent;
 };
 
+const deleteEvent = async ({ eventId }) => {
+    if (!eventId) {
+        throw new Error("Event ID is required");
+    }
+
+    const existingEvent = await eventModel.getEventById({
+        eventId
+    });
+
+    if (!existingEvent) {
+        throw new Error("Event not found");
+    }
+
+    if (existingEvent.status !== "DRAFT") {
+        throw new Error("Only draft events can be deleted");
+    }
+
+    const deletedEvent = await eventModel.deleteEvent({
+        eventId
+    });
+
+    if (!deletedEvent) {
+        throw new Error("Unable to delete event");
+    }
+
+    return deletedEvent;
+};
+
 module.exports = {
     createEvent,
     getEventById ,
     getEvents ,
-    updateEvent
+    updateEvent ,
+    deleteEvent
 };
