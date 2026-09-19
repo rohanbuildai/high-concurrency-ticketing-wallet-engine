@@ -129,3 +129,52 @@ CREATE TABLE event_inventory (
     CONSTRAINT unique_event_ticket_type
         UNIQUE (event_id, ticket_type)
 );
+
+CREATE TABLE reservations (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    user_id BIGINT NOT NULL,
+
+    inventory_id BIGINT NOT NULL,
+
+    quantity INTEGER NOT NULL,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'HELD',
+
+    expires_at TIMESTAMPTZ NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_reservations_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_reservations_inventory
+        FOREIGN KEY (inventory_id)
+        REFERENCES event_inventory(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT reservations_quantity_check
+        CHECK (quantity > 0),
+
+    CONSTRAINT reservations_status_check
+        CHECK (
+            status IN (
+                'HELD',
+                'EXPIRED',
+                'CANCELLED',
+                'CONFIRMED'
+            )
+        )
+);
+CREATE INDEX idx_reservations_user_id
+ON reservations(user_id);
+
+CREATE INDEX idx_reservations_inventory_id
+ON reservations(inventory_id);
+
+CREATE INDEX idx_reservations_status_expires_at
+ON reservations(status, expires_at);
