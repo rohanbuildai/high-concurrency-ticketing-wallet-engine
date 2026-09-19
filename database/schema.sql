@@ -88,3 +88,44 @@ CREATE INDEX idx_events_created_by
 ON events(created_by);
 CREATE INDEX idx_events_status_event_date
 ON events(status, event_date);
+
+
+CREATE TABLE event_inventory (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    event_id BIGINT NOT NULL,
+
+    ticket_type VARCHAR(20) NOT NULL,
+
+    total_quantity INTEGER NOT NULL,
+
+    available_quantity INTEGER NOT NULL,
+
+    price NUMERIC(12,2) NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_event_inventory_event
+        FOREIGN KEY (event_id)
+        REFERENCES events(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT event_inventory_ticket_type_check
+        CHECK (
+            ticket_type IN ('VIP', 'GENERAL', 'STUDENT')
+        ),
+
+    CONSTRAINT event_inventory_total_quantity_check
+        CHECK (total_quantity > 0),
+
+    CONSTRAINT event_inventory_available_quantity_check
+        CHECK (available_quantity >= 0),
+
+    CONSTRAINT event_inventory_price_check
+        CHECK (price >= 0),
+
+    CONSTRAINT unique_event_ticket_type
+        UNIQUE (event_id, ticket_type)
+);
