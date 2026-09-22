@@ -113,9 +113,96 @@ const getEventInventoryReservationById = async ( { reservationId } ) => {
     return result.rows[0] ;
 };
 
+const getExpiredReservations = async ( { client, limit } ) => {
+    const query = `
+        SELECT
+            id,
+            user_id,
+            inventory_id,
+            quantity,
+            status,
+            expires_at,
+            created_at,
+            updated_at
+        FROM reservations
+        WHERE status = 'HELD'
+          AND expires_at <= NOW()
+        ORDER BY expires_at ASC
+        LIMIT $1
+        FOR UPDATE SKIP LOCKED;
+    `;
+
+    const value = [ limit ] ;
+
+    const result = await client.query( query, value ) ;
+
+    return result.rows ;
+};
+
+const increaseInventoryAvailableQuantity = async ({
+    client,
+    inventoryId,
+    quantity
+}) => {
+    const query = `
+        UPDATE event_inventory
+        SET
+            available_quantity = available_quantity + $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING
+            id,
+            event_id,
+            ticket_type,
+            total_quantity,
+            available_quantity,
+            price,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [ quantity , inventoryId ] ;
+
+    const result = await client.query( query , values ) ;
+
+    return result.rows[0];
+};
+
+const markReservationAsExpired = async ({
+    client,
+    reservationId
+}) => {
+    const query = `
+        UPDATE reservations
+        SET
+            status = 'EXPIRED',
+            updated_at = NOW()
+        WHERE id = $1
+          AND status = 'HELD'
+        RETURNING
+            id,
+            user_id,
+            inventory_id,
+            quantity,
+            status,
+            expires_at,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [ reservationId ] ;
+
+    const result = await client.query( query , values ) ;
+
+    return result.rows[0];
+};
+
 module.exports = {
     getEventInventoryForUpdate ,
     decreaseInventoryAvailableQuantity ,
     createEventReservation ,
-    getEventInventoryReservationById
+    getEventInventoryReservationById ,
+    getExpiredReservations ,
+    increaseInventoryAvailableQuantity ,
+    markReservationAsExpired
 }

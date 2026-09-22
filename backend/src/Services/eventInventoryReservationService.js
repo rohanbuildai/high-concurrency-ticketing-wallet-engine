@@ -62,6 +62,43 @@ const createEventReservation = async ( { userId , inventoryId , quantity } ) => 
     }
 }
 
+const expireReservations = async ( { limit = 100 } ) => {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const expiredReservations =
+            await eventInventoryReservationModel.getExpiredReservations({
+                client,
+                limit
+            });
+
+        for (const reservation of expiredReservations) {
+            await eventInventoryReservationModel.increaseInventoryAvailableQuantity({
+                client,
+                inventoryId: reservation.inventory_id,
+                quantity: reservation.quantity
+            });
+
+            await eventInventoryReservationModel.markReservationAsExpired({
+                client,
+                reservationId: reservation.id
+            });
+        }
+
+        await client.query("COMMIT");
+
+        return expiredReservations.length;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
-    createEventReservation
+    createEventReservation ,
+    expireReservations
 }
