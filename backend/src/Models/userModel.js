@@ -13,7 +13,7 @@ const getUserByEmail = async ( { email } ) => {
     return result.rows[0] ;
 }
 
-const registerUser = async ( { name , email , password } ) => {
+const registerUser = async ( { client = pool , name , email , password } ) => {
 
     const query = `
 
@@ -24,7 +24,7 @@ const registerUser = async ( { name , email , password } ) => {
 
     const values = [ name , email , password ] ;
 
-    const result = await pool.query( query , values ) ;
+    const result = await client.query( query , values ) ;
 
     return result.rows[0] ;
 }

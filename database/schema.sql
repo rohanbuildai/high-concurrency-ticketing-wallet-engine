@@ -178,3 +178,52 @@ ON reservations(inventory_id);
 
 CREATE INDEX idx_reservations_status_expires_at
 ON reservations(status, expires_at);
+
+
+CREATE TABLE wallets (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    balance BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_wallets_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT wallets_balance_check
+        CHECK (balance >= 0)
+);
+
+
+CREATE TABLE wallet_ledger (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    wallet_id BIGINT NOT NULL,
+    transaction_type VARCHAR(30) NOT NULL,
+    amount BIGINT NOT NULL,
+    balance_after BIGINT NOT NULL,
+    reference_type VARCHAR(30),
+    reference_id BIGINT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_wallet_ledger_wallet
+        FOREIGN KEY (wallet_id)
+        REFERENCES wallets(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT wallet_ledger_transaction_type_check
+        CHECK (
+            transaction_type IN (
+                'SIMULATED_CREDIT',
+                'TICKET_PURCHASE',
+                'REFUND'
+            )
+        ),
+
+    CONSTRAINT wallet_ledger_amount_check
+        CHECK (amount > 0),
+
+    CONSTRAINT wallet_ledger_balance_after_check
+        CHECK (balance_after >= 0)
+);

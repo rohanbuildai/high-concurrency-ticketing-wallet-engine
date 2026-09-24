@@ -5,8 +5,10 @@ const pool = require("../config/db") ;
 
 const userModel = require("../Models/userModel") ;
 const refreshTokenModel = require("../Models/refreshTokenModel") ;
+const walletService = require("../Services/walletService") ;
 
 const registerUser = async ( { name , email , password } ) => {
+    const client = await pool.connect() ;
 
     try {
 
@@ -31,18 +33,31 @@ const registerUser = async ( { name , email , password } ) => {
 
         const hashedPassword = await bcrypt.hash( password , 10 ) ;
 
+        await client.query("BEGIN") ;
+
         const newUser = await userModel.registerUser({
+            client ,
             name ,
             email : normalizedEmail ,
             password : hashedPassword
         })
 
+        await walletService.createWallet({
+            client ,
+            userId : newUser.id
+        })
+
+        await client.query("COMMIT");
+
         return newUser ;
 
     }catch(error) {
+        await client.query("ROLLBACK");
         console.error(error) ;
 
         throw error ;
+    }finally {
+        client.release() ;
     }
 }
 
