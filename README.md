@@ -234,31 +234,73 @@ The project is being developed progressively so that each feature introduces a r
 
 # 🚀 Current Progress
 
-The project is being implemented feature-by-feature.
+The project is being implemented feature-by-feature, with each major concept implemented, tested, and committed before moving forward.
 
-Current components include:
+## Completed
 
 - [x] Project foundation
 - [x] Express backend
 - [x] PostgreSQL integration
+- [x] Layered backend architecture
 - [x] User registration
+- [x] Automatic wallet creation during registration
+- [x] Atomic user + wallet registration transaction
+- [x] Transaction rollback testing
 - [x] User login
 - [x] Access & refresh tokens
 - [x] Refresh-token rotation
+- [x] Refresh-token revocation
 - [x] Authentication middleware
 - [x] Role-Based Access Control
 - [x] Event management
-- [x] Event lifecycle
+- [x] Event lifecycle/state machine
 - [x] Ticket inventory
+- [x] Inventory constraints and indexing
 - [x] Ticket reservations
 - [x] PostgreSQL transactions
 - [x] Row-level locking with `FOR UPDATE`
 - [x] Temporary ticket holds
-- [x] Reservation expiry timestamps
+- [x] Reservation expiration worker
+- [x] `FOR UPDATE SKIP LOCKED` for expiration processing
+- [x] Wallet management
+- [x] Wallet credit
+- [x] Wallet ledger
+- [x] Transactional wallet debit
+- [x] Purchase creation
+- [x] Atomic ticket purchase workflow
+- [x] Reservation confirmation
+- [x] Database-level duplicate purchase protection with `UNIQUE(reservation_id)`
+- [x] Rollback testing across wallet, ledger, and purchase operations
 
-More features will be added progressively.
+## Current Milestone
 
----
+The core synchronous purchase flow is now working end-to-end:
+
+```text
+Reservation
+    ↓
+Validate ownership + state
+    ↓
+Lock reservation
+    ↓
+Lock inventory
+    ↓
+Calculate purchase amount
+    ↓
+Lock wallet
+    ↓
+Debit wallet
+    ↓
+Create wallet ledger entry
+    ↓
+Create purchase
+    ↓
+HELD → CONFIRMED
+    ↓
+COMMIT
+```
+
+The next major concept is **idempotency**, followed by retries, failure handling, asynchronous processing, scalability, and distributed-system evolution.
 
 # 🔮 Future Plans
 
@@ -275,21 +317,24 @@ The system will evolve gradually from a simple PostgreSQL-backed backend into a 
 
 ### Phase 2 — Transactional Systems
 
-- Wallet
-- Wallet ledger
-- Ticket purchasing
-- Atomic purchase workflows
-- Idempotency
-- Payment-state modeling
+- [x] Wallet
+- [x] Wallet ledger
+- [x] Ticket purchasing
+- [x] Atomic purchase workflows
+- [x] Reservation confirmation within purchase transaction
+- [ ] Idempotency
+- [ ] Payment-state modeling
 
 ### Phase 3 — Concurrency & Reliability
 
-- Reservation expiration
-- Background workers
-- Retry mechanisms
-- Failure recovery
-- Concurrent request testing
-- Load testing
+- [x] Reservation expiration
+- [x] Background workers
+- [x] Row-level concurrency control
+- [x] Transaction rollback / failure recovery
+- [ ] Idempotent request handling
+- [ ] Retry mechanisms
+- [ ] Concurrent request testing
+- [ ] Load testing
 
 ### Phase 4 — Scalability
 
@@ -448,6 +493,62 @@ Move to the next concept
 ```
 
 The objective is to understand **why a system is designed a certain way**, not simply memorize system-design terminology.
+
+---
+
+# 🗺️ Next Development Roadmap
+
+The remaining development will continue from the current transactional core toward reliability and distributed-system behavior.
+
+```text
+Current
+  ↓
+Idempotency
+  ↓
+Retries & failure handling
+  ↓
+Concurrent/load testing
+  ↓
+Async processing & message queues
+  ↓
+Outbox pattern
+  ↓
+Event-driven architecture
+  ↓
+Caching
+  ↓
+Horizontal scaling + load balancing
+  ↓
+Database scaling
+  ↓
+Observability
+  ↓
+Rate limiting & fault isolation
+  ↓
+Production hardening
+```
+
+The project will continue to use the same workflow for each major concept:
+
+```text
+Problem
+  ↓
+Understand the concept
+  ↓
+Design
+  ↓
+Implement
+  ↓
+Test
+  ↓
+Analyze failure cases / trade-offs
+  ↓
+Commit
+  ↓
+Next concept
+```
+
+The goal is to reach a production-style architecture by **evolving the system only when a real problem justifies the added complexity**.
 
 ---
 
