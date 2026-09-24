@@ -197,6 +197,61 @@ const markReservationAsExpired = async ({
     return result.rows[0];
 };
 
+const getReservationForUpdate = async ({
+    client,
+    reservationId
+}) => {
+    const query = `
+        SELECT
+            id,
+            user_id,
+            inventory_id,
+            quantity,
+            status,
+            expires_at,
+            created_at,
+            updated_at
+        FROM reservations
+        WHERE id = $1
+        FOR UPDATE;
+    `;
+
+    const value = [ reservationId ] ;
+
+    const result = await client.query( query, value ) ;
+
+    return result.rows[0];
+};
+
+const confirmReservation = async ({
+    client,
+    reservationId
+}) => {
+    const query = `
+        UPDATE reservations
+        SET
+            status = 'CONFIRMED',
+            updated_at = NOW()
+        WHERE id = $1
+          AND status = 'HELD'
+        RETURNING
+            id,
+            user_id,
+            inventory_id,
+            quantity,
+            status,
+            expires_at,
+            created_at,
+            updated_at;
+    `;
+
+    const value = [ reservationId ] ;
+
+    const result = await client.query(query, value) ;
+
+    return result.rows[0];
+};
+
 module.exports = {
     getEventInventoryForUpdate ,
     decreaseInventoryAvailableQuantity ,
@@ -204,5 +259,7 @@ module.exports = {
     getEventInventoryReservationById ,
     getExpiredReservations ,
     increaseInventoryAvailableQuantity ,
-    markReservationAsExpired
+    markReservationAsExpired ,
+    getReservationForUpdate ,
+    confirmReservation
 }

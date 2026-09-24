@@ -72,51 +72,21 @@ const creditWallet = async ({ userId, amount }) => {
     }
 };
 
-const debitWallet = async ( { userId, amount } ) => {
-    if (!userId) {
-        throw new Error("User ID is required");
-    }
-
-    if (!Number.isInteger(amount) || amount <= 0) {
-        throw new Error("Amount must be a positive integer");
-    }
-
+const debitWalletTransaction = async ({ userId, amount }) => {
     const client = await pool.connect();
 
     try {
         await client.query("BEGIN");
 
-        const wallet = await walletModel.getWalletForUpdate({
+        const wallet = await debitWallet({
             client,
-            userId
-        });
-
-        if (!wallet) {
-            throw new Error("Wallet not found");
-        }
-
-        if (wallet.balance < amount) {
-            throw new Error("Insufficient wallet balance");
-        }
-
-        const updatedWallet =
-            await walletModel.decreaseWalletBalance({
-                client,
-                walletId: wallet.id,
-                amount
-            });
-
-        await walletModel.createLedgerEntry({
-            client,
-            walletId: wallet.id,
-            transactionType: "TICKET_PURCHASE",
-            amount,
-            balanceAfter: updatedWallet.balance
+            userId,
+            amount
         });
 
         await client.query("COMMIT");
 
-        return updatedWallet;
+        return wallet;
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -125,8 +95,49 @@ const debitWallet = async ( { userId, amount } ) => {
     }
 };
 
+const debitWallet = async ( { client, userId, amount } ) => {
+    if (!userId) {
+        throw new Error("User ID is required");
+    }
+
+    if (!Number.isInteger(amount) || amount <= 0) {
+        throw new Error("Amount must be a positive integer");
+    }
+
+    const wallet = await walletModel.getWalletForUpdate({
+        client,
+        userId
+    });
+
+    if (!wallet) {
+        throw new Error("Wallet not found");
+    }
+
+    if (wallet.balance < amount) {
+        throw new Error("Insufficient wallet balance");
+    }
+
+    const updatedWallet =
+        await walletModel.decreaseWalletBalance({
+            client,
+            walletId: wallet.id,
+            amount
+        });
+
+    await walletModel.createLedgerEntry({
+        client,
+        walletId: wallet.id,
+        transactionType: "TICKET_PURCHASE",
+        amount,
+        balanceAfter: updatedWallet.balance
+    });
+
+    return updatedWallet;
+};
+
 module.exports = {
     createWallet ,
     creditWallet ,
-    debitWallet
+    debitWalletTransaction ,
+    debitWallet 
 };

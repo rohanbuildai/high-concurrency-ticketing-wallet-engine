@@ -227,3 +227,34 @@ CREATE TABLE wallet_ledger (
     CONSTRAINT wallet_ledger_balance_after_check
         CHECK (balance_after >= 0)
 );
+
+CREATE TABLE purchases (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    reservation_id BIGINT NOT NULL UNIQUE,
+    amount BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_purchases_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_purchases_reservation
+        FOREIGN KEY (reservation_id)
+        REFERENCES reservations(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT purchases_amount_check
+        CHECK (amount > 0),
+
+    CONSTRAINT purchases_status_check
+        CHECK (
+            status IN (
+                'COMPLETED',
+                'REFUNDED'
+            )
+        )
+);

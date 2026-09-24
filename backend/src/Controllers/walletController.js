@@ -25,12 +25,12 @@ const creditWallet = async (req, res) => {
     }
 };
 
-const debitWallet = async (req, res) => {
+const debitWalletTransaction = async (req, res) => {
     try {
         const { id } = req.user;
         const { amount } = req.body;
 
-        const wallet = await walletService.debitWallet({
+        const wallet = await walletService.debitWalletTransaction({
             userId : id,
             amount
         });
@@ -52,5 +52,5 @@ const debitWallet = async (req, res) => {
 
 module.exports = {
     creditWallet ,
-    debitWallet
+    debitWalletTransaction
 };
