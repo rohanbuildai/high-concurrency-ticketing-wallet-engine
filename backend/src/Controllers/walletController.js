@@ -25,6 +25,32 @@ const creditWallet = async (req, res) => {
     }
 };
 
+const debitWallet = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const { amount } = req.body;
+
+        const wallet = await walletService.debitWallet({
+            userId : id,
+            amount
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Wallet debited successfully",
+            data: wallet
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
-    creditWallet
+    creditWallet ,
+    debitWallet
 };

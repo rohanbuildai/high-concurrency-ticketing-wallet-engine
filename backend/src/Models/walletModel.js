@@ -127,10 +127,37 @@ const createLedgerEntry = async ({
     return result.rows[0];
 };
 
+const decreaseWalletBalance = async ({
+    client,
+    walletId,
+    amount
+}) => {
+    const query = `
+        UPDATE wallets
+        SET
+            balance = balance - $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING
+            id,
+            user_id,
+            balance,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [ amount , walletId ] ;
+
+    const result = await client.query( query , values ) ;
+
+    return result.rows[0];
+};
+
 module.exports = {
     createWallet,
     getWalletByUserId ,
     getWalletForUpdate ,
     increaseWalletBalance ,
-    createLedgerEntry
+    createLedgerEntry ,
+    decreaseWalletBalance
 };
