@@ -2,13 +2,23 @@ const pool = require("../config/db") ;
 const reservationModel = require("../Models/eventInventoryReservationModel") ;
 const walletService = require("./walletService") ;
 const purchaseModel = require("../Models/purchaseModel") ;
+const idempotencyModel = require("../Models/idempotencyModel") ;
 
 const createPurchase = async ({
     userId,
     eventId ,
     inventoryId ,
-    reservationId
+    reservationId ,
+    idempotencyKey
 }) => {
+
+    const isIdempotencyConflict = (error) => {
+        return (
+            error.code === "23505" &&
+            error.constraint === "unique_user_idempotency_key"
+        );
+    };
+
     if (!userId) {
         throw new Error("User ID is required");
     }
@@ -17,10 +27,36 @@ const createPurchase = async ({
         throw new Error("Reservation ID is required");
     }
 
+    if (!idempotencyKey || typeof idempotencyKey !== "string") {
+            throw new Error("Idempotency-Key header is required");
+        }
+
+    const normalizedIdempotencyKey = idempotencyKey.trim();
+
+    if (!normalizedIdempotencyKey) {
+        throw new Error("Idempotency-Key header is required");
+    }
+
     const client = await pool.connect();
 
     try {
         await client.query("BEGIN");
+
+        const existingIdempotencyKey =
+        await idempotencyModel.getIdempotencyKey({
+            client,
+            userId,
+            idempotencyKey: normalizedIdempotencyKey
+        });
+
+        if (existingIdempotencyKey) {
+            await client.query("COMMIT");
+
+            return {
+                status: existingIdempotencyKey.response_status,
+                body: existingIdempotencyKey.response_body
+            };
+        }
 
         const reservation =
             await reservationModel.getReservationForUpdate({
@@ -46,17 +82,15 @@ const createPurchase = async ({
                 inventoryId: reservation.inventory_id
             });
 
-        if (String(inventory.id) !== String(inventoryId)) {
-            throw new Error("Reservation does not belong to this inventory");
-        }
-
         if (!inventory) {
             throw new Error("Inventory not found");
         }
 
-        const purchaseAmount = Number(inventory.price) * reservation.quantity;
+        if (String(inventory.id) !== String(inventoryId)) {
+            throw new Error("Reservation does not belong to this inventory");
+        }
 
-        console.log("Purchase amount:", purchaseAmount);
+        const purchaseAmount = Number(inventory.price) * reservation.quantity;
 
         await walletService.debitWallet({
             client,
@@ -81,14 +115,57 @@ const createPurchase = async ({
             throw new Error("Reservation could not be confirmed");
         }
 
+        const responseBody = {
+            success: true,
+            message: "Purchase created successfully",
+            data: purchase
+        };
+
+        await idempotencyModel.createIdempotencyKey({
+            client,
+            userId,
+            idempotencyKey: normalizedIdempotencyKey,
+            purchaseId: purchase.id,
+            responseStatus: 201,
+            responseBody
+        });
+
         await client.query("COMMIT");
 
-        return purchase;
+        return {
+            status: 201,
+            body: responseBody
+        };
 
     } catch (error) {
         await client.query("ROLLBACK");
+
+        if (isIdempotencyConflict(error)) {
+            const existingClient = await pool.connect();
+
+            try {
+                const existingIdempotencyKey =
+                    await idempotencyModel.getIdempotencyKey({
+                        client: existingClient,
+                        userId,
+                        idempotencyKey: normalizedIdempotencyKey
+                    });
+
+                if (!existingIdempotencyKey) {
+                    throw error;
+                }
+
+                return {
+                    status: existingIdempotencyKey.response_status,
+                    body: existingIdempotencyKey.response_body
+                };
+            } finally {
+                existingClient.release();
+            }
+        }
+
         throw error;
-    } finally {
+    }finally {
         client.release();
     }
 };

@@ -258,3 +258,33 @@ CREATE TABLE purchases (
             )
         )
 );
+
+
+CREATE TABLE idempotency_keys (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    user_id BIGINT NOT NULL,
+
+    idempotency_key VARCHAR(255) NOT NULL,
+
+    purchase_id BIGINT NOT NULL,
+
+    response_status INTEGER NOT NULL,
+
+    response_body JSONB NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_idempotency_keys_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_idempotency_keys_purchase
+        FOREIGN KEY (purchase_id)
+        REFERENCES purchases(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT unique_user_idempotency_key
+        UNIQUE (user_id, idempotency_key)
+);

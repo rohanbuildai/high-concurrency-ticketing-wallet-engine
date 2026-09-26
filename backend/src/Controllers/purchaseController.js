@@ -8,20 +8,19 @@ const createPurchase = async (req, res) => {
             reservationId
         } = req.params;
 
-        const { id: userId } = req.user;
+        const { id } = req.user;
+        const idempotencyKey = req.get("Idempotency-Key");
 
         const purchase = await purchaseService.createPurchase({
-            userId,
+            userId : id,
             eventId,
             inventoryId,
-            reservationId
+            reservationId ,
+            idempotencyKey
         });
 
-        return res.status(201).json({
-            success: true,
-            message: "Purchase created successfully",
-            data: purchase
-        });
+        return res.status(purchase.status).json(purchase.body);
+
     } catch (error) {
         console.error(error);
 
